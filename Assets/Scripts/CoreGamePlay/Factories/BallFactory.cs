@@ -1,3 +1,4 @@
+using CoreGamePlay.Components.Triggers;
 using CoreGamePlay.Components.Waiters;
 using UnityEngine;
 
@@ -23,11 +24,19 @@ namespace CoreGamePlay.Factories
 				position,
 				Quaternion.identity);
 
-			var ballWaiters = newGameObject.GetComponents<IBallCounterWaiter>();
-			foreach (var waiter in ballWaiters)
-				waiter.Constuct(_counter);
+			var factoryWaiters = newGameObject.GetComponents<IBallFactoryWaiter>();
+			foreach (var waiter in factoryWaiters)
+				waiter.Construct(this);
 			
 			_counter.AddBall(_ballType);
+
+			var destroyTrigger = newGameObject.AddComponent<OnDestroyTrigger>();
+			destroyTrigger.DestroyEvent += OnBallDestroy;
+		}
+		
+		private void OnBallDestroy(GameObject obj)
+		{
+			_counter.DelBall(_ballType);
 		}
 	}
 }

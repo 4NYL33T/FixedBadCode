@@ -1,36 +1,39 @@
-﻿using Infrastructure.Service.LoadLevels;
+﻿using System.ComponentModel.Design;
+using Infrastructure.Service;
+using Infrastructure.Service.LoadLevels;
+using Infrastructure.StateMachines;
+using Infrastructure.Utility;
 using UI.Common.StateViewers;
 
 namespace Infrastructure.States
 {
-	public class LoadSceneState : IState
+	public class LoadSceneEnterPayloadState : IEnterPayloadState<string>
 	{
 		private readonly IStateViewer _loadCurtain;
-		private readonly ILoadLevelService _loadLevelService;
-		private readonly IState _nextState;
-		
-		private const string _gamePlayScene = "GamePlay";
+		private readonly UnitySceneLoadLevelService _loadLevelService;
+		private readonly IEnterStateMachine _enterStateMachine;
 
-		public LoadSceneState(
+		public LoadSceneEnterPayloadState(
 			IStateViewer loadCurtain,
-			ILoadLevelService loadLevelService,
-			IState nextState)
+			ICoroutineRunner coroutineRunner,
+			IEnterStateMachine enterStateMachine,
+			ServicesContainer servicesContainer)
 		{
 			_loadCurtain = loadCurtain;
-			_loadLevelService = loadLevelService;
-			_nextState = nextState;
+			_loadLevelService = new UnitySceneLoadLevelService(coroutineRunner);
+			servicesContainer.Add<ILoadLevelService>(_loadLevelService);
+			_enterStateMachine = enterStateMachine;
 		}
-		
-		public void Enter()
+
+		public void Enter(string payloadData)
 		{
 			_loadCurtain.Enable();
-			_loadLevelService.Load(_gamePlayScene, Exit);
+			_loadLevelService.Load(payloadData, ()=>_enterStateMachine.Enter<LevelInitializeState>());
 		}
 
 		public void Exit()
 		{
 			_loadCurtain.Disable();
-			_nextState.Enter();
 		}
 	}
 }
